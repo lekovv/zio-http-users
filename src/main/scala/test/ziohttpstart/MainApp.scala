@@ -2,26 +2,32 @@ package test.ziohttpstart
 
 import zio._
 import zio.http._
-import zio.json.{DecoderOps, DeriveJsonCodec, EncoderOps, JsonCodec, JsonDecoder}
+import zio.json.{DeriveJsonCodec, EncoderOps, JsonCodec}
+import zio.schema.{DeriveSchema, Schema}
+import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 object MainApp extends ZIOAppDefault {
 
   final case class Status(id: String, description: String, active: Boolean)
 
+  /* можно использовать свой кастомный парсер
   private object JsonParse {
     def bodyParse[A: JsonDecoder](body: String): Task[A] = ZIO
       .fromEither(body.fromJson[A])
       .mapError(err => new Exception(s"Can't decode body: $err"))
   }
+   */
+
   object Status {
     implicit val codec: JsonCodec[Status] = DeriveJsonCodec.gen[Status]
+    implicit val schema: Schema[Status]   = DeriveSchema.gen[Status]
   }
 
   private object StatusRepo {
     var statuses: Map[String, Status] = Map.empty
   }
 
-  private def getActiveById(id: String) = {
+  private def getActiveById(id: String): Option[Status] = {
     StatusRepo.statuses.get(id).filter(_.active)
   }
 
@@ -29,13 +35,11 @@ object MainApp extends ZIOAppDefault {
     StatusRepo.statuses += (status.id -> status)
   }
 
-  private def getAllStatuses = {
+  private def getAllStatuses: List[Status] = {
     StatusRepo.statuses.values.toList
   }
   private object Exception {
-    private sealed abstract class CustomException(message: String = "") extends Exception(message)
-
-    private case class TestException(message: String) extends CustomException(message)
+    private case class TestException(message: String) extends Exception(message)
 
     val exceptionHandler: Throwable => Response = {
       case err: TestException => Response.internalServerError(s"Exception: $err")
@@ -43,7 +47,8 @@ object MainApp extends ZIOAppDefault {
     }
   }
 
-  val routes: Routes[Any, Nothing] =
+  //TODO: сделать маршрут дополнительно в endpoint pattern. https://zio.dev/zio-http/reference/endpoint
+  val routes: Routes[Any, Nothing] = {
     Routes(
       Method.GET / "api" / "status" / "get" / string("id") -> handler { (id: String, _: Request) =>
         for {
@@ -53,8 +58,7 @@ object MainApp extends ZIOAppDefault {
       },
       Method.POST / "api" / "status" / "set" -> handler { (req: Request) =>
         for {
-          body   <- req.body.asString
-          status <- JsonParse.bodyParse[Status](body)
+          status <- req.body.to[Status]
           _      <- ZIO.succeed(setStatus(status))
         } yield Response.ok
       },
@@ -65,6 +69,7 @@ object MainApp extends ZIOAppDefault {
         } yield response
       }
     ).handleError(Exception.exceptionHandler)
+  }
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     val config      = Server.Config.default.binding("localhost", 8080)
@@ -72,3 +77,5 @@ object MainApp extends ZIOAppDefault {
     Server.serve(routes).provide(configLayer, Server.live)
   }
 }
+
+//TODO: шаг 3. почитать про сервис паттерн. https://zio.dev/reference/architecture/programming-paradigms-in-zio (весь раздел), https://zio.dev/reference/service-pattern/
