@@ -6,7 +6,7 @@ import zio.json.{DeriveJsonCodec, EncoderOps, JsonCodec}
 import zio.schema.{DeriveSchema, Schema}
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
-object MainApp extends ZIOAppDefault {
+object RoutePatternApp extends ZIOAppDefault {
 
   final case class Status(id: String, description: String, active: Boolean)
 
@@ -27,16 +27,16 @@ object MainApp extends ZIOAppDefault {
     var statuses: Map[String, Status] = Map.empty
   }
 
-  private def getActiveById(id: String): Option[Status] = {
-    StatusRepo.statuses.get(id).filter(_.active)
+  private def getActiveById(id: String): ZIO[Any, Nothing, Option[Status]] = {
+    ZIO.succeed(StatusRepo.statuses.get(id).filter(_.active))
   }
 
-  private def setStatus(status: Status): Unit = {
-    StatusRepo.statuses += (status.id -> status)
+  private def setStatus(status: Status): ZIO[Any, Nothing, Unit] = {
+    ZIO.succeed(StatusRepo.statuses += (status.id -> status))
   }
 
-  private def getAllStatuses: List[Status] = {
-    StatusRepo.statuses.values.toList
+  private def getAllStatuses: ZIO[Any, Nothing, List[Status]] = {
+    ZIO.succeed(StatusRepo.statuses.values.toList)
   }
   private object Exception {
     private case class TestException(message: String) extends Exception(message)
@@ -47,30 +47,28 @@ object MainApp extends ZIOAppDefault {
     }
   }
 
-  //TODO: сделать маршрут дополнительно в endpoint pattern. https://zio.dev/zio-http/reference/endpoint
   val routes: Routes[Any, Nothing] = {
     Routes(
       Method.GET / "api" / "status" / "get" / string("id") -> handler { (id: String, _: Request) =>
         for {
-          status <- ZIO.succeed(getActiveById(id))
+          status <- getActiveById(id)
           response = Response.json(status.toJson)
         } yield response
       },
       Method.POST / "api" / "status" / "set" -> handler { (req: Request) =>
         for {
           status <- req.body.to[Status]
-          _      <- ZIO.succeed(setStatus(status))
+          _      <- setStatus(status)
         } yield Response.ok
       },
       Method.GET / "api" / "status" / "get-all" -> handler { (_: Request) =>
         for {
-          status <- ZIO.succeed(getAllStatuses)
+          status <- getAllStatuses
           response = Response.json(status.toJson)
         } yield response
       }
     ).handleError(Exception.exceptionHandler)
   }
-
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     val config      = Server.Config.default.binding("localhost", 8080)
     val configLayer = ZLayer.succeed(config)
