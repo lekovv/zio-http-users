@@ -1,12 +1,17 @@
-package test.ziohttpstart
-
+import config._
 import zio._
+import zio.config.typesafe.TypesafeConfigProvider
 import zio.http._
 import zio.http.codec.HttpCodec
 import zio.http.endpoint.{AuthType, Endpoint}
 import zio.schema.{DeriveSchema, Schema}
 
 object EndpointPatternApp extends ZIOAppDefault {
+  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
+    Runtime.setConfigProvider(
+      TypesafeConfigProvider
+        .fromResourcePath()
+    )
 
   case class Status(id: String, description: String, active: Boolean)
 
@@ -50,9 +55,7 @@ object EndpointPatternApp extends ZIOAppDefault {
 
   val routes: Routes[Any, Nothing] = Routes(getAllStatusesRoute, getStatusById, setStatus)
 
-  override def run: ZIO[Any, Throwable, Nothing] = {
-    val config      = Server.Config.default.binding("localhost", 8080)
-    val configLayer = ZLayer.succeed(config)
-    Server.serve(routes).provide(configLayer, Server.live)
+  def run = {
+    Server.serve(routes).provide(ConfigApp.server)
   }
 }

@@ -1,10 +1,8 @@
-package test.ziohttpstart
-
 import zio._
 import zio.http._
 import zio.json.{DeriveJsonCodec, EncoderOps, JsonCodec}
-import zio.schema.{DeriveSchema, Schema}
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
+import zio.schema.{DeriveSchema, Schema}
 
 object RoutePatternApp extends ZIOAppDefault {
 

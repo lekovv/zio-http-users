@@ -1,5 +1,3 @@
-import Dependencies._
-
 ThisBuild / organization := "test"
 ThisBuild / version := "0.0.1"
 ThisBuild / scalaVersion      := "2.13.10"
@@ -11,25 +9,13 @@ ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-im
 
 def settingsApp = Seq(
   name := "zio-http-start",
-  Compile / run / mainClass := Option("test.ziohttpstart.MainApp"),
-  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-  libraryDependencies ++= Seq(
-    zioHttp, 
-    zioTest, 
-    zioTestSBT, 
-    zioTestMagnolia
-  ),
-)
-
-def settingsDocker = Seq(
-  Docker / version          := version.value,
-  dockerBaseImage := "eclipse-temurin:20.0.1_9-jre",
+  Compile / run / mainClass := Option("EndpointPatternApp"),
+  libraryDependencies ++= Dependencies.globalProjectDependencies,
 )
 
 lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .settings(settingsApp)
-  .settings(settingsDocker)
 
 addCommandAlias("fmt", "scalafmt; Test / scalafmt; sFix;")
 addCommandAlias("fmtCheck", "scalafmtCheck; Test / scalafmtCheck; sFixCheck")
