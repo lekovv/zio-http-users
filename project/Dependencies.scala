@@ -11,6 +11,7 @@ object Dependencies {
 
   object ZIO {
     lazy val schemaDerive = "dev.zio" %% "zio-schema-derivation" % Version.zioSchema % Test
+    lazy val macros       = "dev.zio" %% "zio-macros"            % Version.zio
   }
 
   object HTTP {
@@ -32,6 +33,7 @@ object Dependencies {
 
   lazy val globalProjectDependencies = Seq(
     ZIO.schemaDerive,
+    ZIO.macros,
     HTTP.zhttp,
     CONFIG.core,
     CONFIG.magnolia,

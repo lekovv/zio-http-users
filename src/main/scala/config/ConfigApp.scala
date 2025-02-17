@@ -1,9 +1,10 @@
 package config
 
-import zio.config.magnolia.deriveConfig
-import zio.config._
-import zio.http._
+import service.StatusRepo
 import zio._
+import zio.config._
+import zio.config.magnolia.deriveConfig
+import zio.http._
 import zio.http.netty.NettyConfig
 import zio.http.netty.NettyConfig.LeakDetectionLevel
 
@@ -31,8 +32,11 @@ object ConfigApp {
 
   private val nettyConf = ZLayer.succeed(
     NettyConfig.default
-      .leakDetection(LeakDetectionLevel.DISABLED))
+      .leakDetection(LeakDetectionLevel.DISABLED)
+  )
 
-  lazy val server: ZLayer[Any, Throwable, Driver with Server] = (serverConf ++ nettyConf) >>> Server.customized
+  private lazy val server = (serverConf ++ nettyConf) >>> Server.customized
+
+  val all = server >+> StatusRepo.live
 
 }

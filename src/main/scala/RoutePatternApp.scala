@@ -1,3 +1,4 @@
+import handlers.exceptionHandler
 import zio._
 import zio.http._
 import zio.json.{DeriveJsonCodec, EncoderOps, JsonCodec}
@@ -36,14 +37,6 @@ object RoutePatternApp extends ZIOAppDefault {
   private def getAllStatuses: ZIO[Any, Nothing, List[Status]] = {
     ZIO.succeed(StatusRepo.statuses.values.toList)
   }
-  private object Exception {
-    private case class TestException(message: String) extends Exception(message)
-
-    val exceptionHandler: Throwable => Response = {
-      case err: TestException => Response.internalServerError(s"Exception: $err")
-      case err                => Response.badRequest(s"Exception: $err")
-    }
-  }
 
   val routes: Routes[Any, Nothing] = {
     Routes(
@@ -65,7 +58,7 @@ object RoutePatternApp extends ZIOAppDefault {
           response = Response.json(status.toJson)
         } yield response
       }
-    ).handleError(Exception.exceptionHandler)
+    ).handleError(exceptionHandler)
   }
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     val config      = Server.Config.default.binding("localhost", 8080)
