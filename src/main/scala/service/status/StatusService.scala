@@ -1,4 +1,4 @@
-package service
+package service.status
 
 import models.StatusModel
 import zio.{RIO, ZIO}
@@ -20,6 +20,6 @@ object StatusService {
   def setStatus(status: StatusModel): RIO[StatusRepo, Unit] =
     for {
       service <- ZIO.service[StatusRepo]
-      result <- service.setStatus(status)
+      result  <- service.setStatus(status)
     } yield result
 }

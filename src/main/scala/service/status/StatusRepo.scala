@@ -1,4 +1,4 @@
-package service
+package service.status
 
 import models.StatusModel
 import zio.macros.accessible

@@ -1,9 +1,10 @@
 import config.ConfigApp
-import service.StatusRepo
-import zio.http.Server
+import service.catFacts.CatFacts
+import service.status.StatusRepo
 import zio.http.netty.NettyConfig
 import zio.http.netty.NettyConfig.LeakDetectionLevel
-import zio.{ZIO, ZLayer}
+import zio.http.{Client, Server}
+import zio.{Scope, ZIO, ZLayer}
 
 object Layers {
 
@@ -18,7 +19,19 @@ object Layers {
       .leakDetection(LeakDetectionLevel.DISABLED)
   )
 
+  private val runtime = Scope.default
+
+  private val base = ConfigApp.live
+
   private lazy val server = (serverConf ++ nettyConf) >>> Server.customized
 
-  val all = server >+> StatusRepo.live
+  private val client = Client.default
+
+  val all =
+    runtime >+>
+      base >+>
+      client >+>
+      server >+>
+      StatusRepo.live >+>
+      CatFacts.live
 }

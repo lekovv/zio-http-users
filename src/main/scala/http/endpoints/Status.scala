@@ -1,12 +1,14 @@
 package http.endpoints
 
-import models.StatusModel
-import service.StatusRepo
-import service.StatusService._
+import models.{CatFactsModel, StatusModel}
+import service.catFacts.CatFacts
+import service.catFacts.CatFactsService.sendRequest
+import service.status.StatusRepo
+import service.status.StatusService._
 import zio.ZNothing
 import zio.http.codec.HttpCodec
 import zio.http.endpoint.{AuthType, Endpoint}
-import zio.http.{handler, RoutePattern, Routes}
+import zio.http.{RoutePattern, Routes, handler}
 
 object Status {
 
@@ -19,14 +21,19 @@ object Status {
       .query(HttpCodec.query[String]("id"))
       .out[Option[StatusModel]]
 
-  private val endpointSetStatus =
+  private val endpointSetStatus: Endpoint[Unit, StatusModel, ZNothing, Unit, AuthType.None] =
     Endpoint(RoutePattern.POST / "endpoint" / "status" / "set")
       .in[StatusModel]
       .out[Unit]
 
+  private val endpointCatFacts =
+    Endpoint(RoutePattern.GET / "endpoint" / "cat")
+      .out[CatFactsModel]
+
   private val getAllStatusesHandler = endpointGetAll.implementHandler(handler(getAllStatuses).orDie)
   private val getStatusByIdHandler  = endpointGetById.implementHandler(handler((id: String) => getStatusById(id)).orDie)
   private val setStatusHandler      = endpointSetStatus.implementHandler(handler((status: StatusModel) => setStatus(status)).orDie)
+  private val catHandler            = endpointCatFacts.implementHandler(handler(sendRequest().orDie))
 
-  val routes: Routes[StatusRepo, Nothing] = Routes(getAllStatusesHandler, getStatusByIdHandler, setStatusHandler)
+  val routes: Routes[StatusRepo with CatFacts, Nothing] = Routes(getAllStatusesHandler, getStatusByIdHandler, setStatusHandler, catHandler)
 }
