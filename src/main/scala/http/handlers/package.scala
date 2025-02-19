@@ -1,3 +1,5 @@
+package http
+
 import exception.Exceptions.StatusNotFound
 import zio.http.Response
 

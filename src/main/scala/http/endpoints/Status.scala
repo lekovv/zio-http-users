@@ -1,4 +1,4 @@
-package http_*
+package http.endpoints
 
 import models.StatusModel
 import service.StatusRepo
@@ -6,9 +6,9 @@ import service.StatusService._
 import zio.ZNothing
 import zio.http.codec.HttpCodec
 import zio.http.endpoint.{AuthType, Endpoint}
-import zio.http.{RoutePattern, Routes, handler}
+import zio.http.{handler, RoutePattern, Routes}
 
-object Endpoints {
+object Status {
 
   private val endpointGetAll: Endpoint[Unit, Unit, ZNothing, List[StatusModel], AuthType.None] =
     Endpoint(RoutePattern.GET / "endpoint" / "status" / "get-all")
@@ -24,9 +24,9 @@ object Endpoints {
       .in[StatusModel]
       .out[Unit]
 
-  private val getAllStatusesRoute = endpointGetAll.implementHandler(handler(getAllStatuses).orDie)
-  private val getStatusByIdRoute  = endpointGetById.implementHandler(handler((id: String) => getStatusById(id)).orDie)
-  private val setStatusRoute      = endpointSetStatus.implementHandler(handler((status: StatusModel) => setStatus(status)).orDie)
+  private val getAllStatusesHandler = endpointGetAll.implementHandler(handler(getAllStatuses).orDie)
+  private val getStatusByIdHandler  = endpointGetById.implementHandler(handler((id: String) => getStatusById(id)).orDie)
+  private val setStatusHandler      = endpointSetStatus.implementHandler(handler((status: StatusModel) => setStatus(status)).orDie)
 
-  val endRoutes: Routes[StatusRepo, Nothing] = Routes(getAllStatusesRoute, getStatusByIdRoute, setStatusRoute)
+  val routes: Routes[StatusRepo, Nothing] = Routes(getAllStatusesHandler, getStatusByIdHandler, setStatusHandler)
 }
