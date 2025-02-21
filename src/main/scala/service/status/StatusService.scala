@@ -11,13 +11,13 @@ object StatusService {
       result  <- service.getAllStatuses
     } yield result
 
-  def getStatusById(id: String): RIO[StatusRepo, Option[StatusModel]] =
+  def getStatusById(id: String): RIO[StatusRepo, StatusModel] =
     for {
       service <- ZIO.service[StatusRepo]
       result  <- service.getStatusById(id)
     } yield result
 
-  def setStatus(status: StatusModel): RIO[StatusRepo, Unit] =
+  def setStatus(status: StatusModel): RIO[StatusRepo, String] =
     for {
       service <- ZIO.service[StatusRepo]
       result  <- service.setStatus(status)

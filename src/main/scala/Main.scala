@@ -23,7 +23,7 @@ object Main extends ZIOAppDefault {
   private val program =
     for {
       _    <- ZIO.logInfo("Server is running")
-      http <- startServer.exitCode.fork
+      http <- startServer.exitCode
     } yield http
 
   override def run: UIO[ExitCode] = {

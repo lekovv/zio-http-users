@@ -1,20 +1,50 @@
 package service.status
 
+import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.StatusModel
-import zio.{Task, ULayer, ZIO, ZLayer}
+import zio.{Task, ZIO, ZLayer}
 
-final case class StatusRepoLive() extends StatusRepo {
+import javax.sql.DataSource
 
-  private var statuses: Map[String, StatusModel] = Map.empty
+final case class StatusRepoLive(ds: DataSource) extends StatusRepo {
 
-  override def getAllStatuses: Task[List[StatusModel]] = ZIO.succeed(statuses.values.toList)
+  private val dsZL = ZLayer.succeed(ds)
 
-  override def getStatusById(id: String): Task[Option[StatusModel]] = ZIO.succeed(statuses.get(id).filter(_.active))
+  private val ctx = new PostgresZioJdbcContext(SnakeCase)
 
-  override def setStatus(status: StatusModel): Task[Unit] = ZIO.succeed(statuses += (status.id -> status))
+  import ctx._
+
+  private val statusSchema = quote {
+    querySchema[StatusModel]("public.statuses")
+  }
+
+  override def getAllStatuses: Task[List[StatusModel]] =
+    ctx
+      .run(statusSchema)
+      .provide(dsZL)
+
+  override def getStatusById(id: String): Task[StatusModel] =
+    ctx
+      .run(
+        statusSchema
+          .filter(_.id == lift(id))
+          .filter(_.active)
+      )
+      .map(_.head)
+      .provide(dsZL)
+
+  override def setStatus(status: StatusModel): Task[String] =
+    ctx
+      .run(statusSchema.insertValue(lift(status)).returning(value => value))
+      .map(result => result.id)
+      .provide(dsZL)
 }
 
 object StatusRepoLive {
 
-  val layer: ULayer[StatusRepoLive] = ZLayer.succeed(StatusRepoLive())
+  val layer: ZLayer[DataSource, Nothing, StatusRepoLive] = ZLayer.fromZIO {
+    for {
+      ds <- ZIO.service[DataSource]
+    } yield StatusRepoLive(ds)
+  }
 }

@@ -21,7 +21,7 @@ object Layers {
 
   private val runtime = Scope.default
 
-  private val base = ConfigApp.live
+  private val base = ConfigApp.live >+> DBContext.live
 
   private lazy val server = (serverConf ++ nettyConf) >>> Server.customized
 
