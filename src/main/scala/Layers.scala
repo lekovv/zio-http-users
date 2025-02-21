@@ -1,4 +1,5 @@
 import config.ConfigApp
+import migration.Migrations
 import service.catFacts.CatFacts
 import service.status.StatusRepo
 import zio.http.netty.NettyConfig
@@ -30,6 +31,7 @@ object Layers {
   val all =
     runtime >+>
       base >+>
+      Migrations.live >+>
       client >+>
       server >+>
       StatusRepo.live >+>

@@ -1,4 +1,5 @@
 import _root_.http.endpoints.{Health, Status}
+import migration.Migrations
 import service.catFacts.CatFacts
 import service.status.StatusRepo
 import zio.Console.printLine
@@ -23,6 +24,7 @@ object Main extends ZIOAppDefault {
   private val program =
     for {
       _    <- ZIO.logInfo("Server is running")
+      _    <- ZIO.serviceWithZIO[Migrations](_.migrate)
       http <- startServer.exitCode
     } yield http
 

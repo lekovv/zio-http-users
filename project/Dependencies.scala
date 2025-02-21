@@ -14,6 +14,7 @@ object Dependencies {
     val scalaLogging = "3.9.5"
     val quill        = "4.8.3"
     val postgre      = "42.7.3"
+    val flyway       = "9.16.0"
   }
 
   object ZIO {
@@ -45,6 +46,7 @@ object Dependencies {
   object STORAGE {
     lazy val quill   = "io.getquill"   %% "quill-jdbc-zio" % Version.quill
     lazy val postgre = "org.postgresql" % "postgresql"     % Version.postgre
+    lazy val flyway  = "org.flywaydb"   % "flyway-core"    % Version.flyway
   }
 
   object TEST {
@@ -70,6 +72,7 @@ object Dependencies {
     CONFIG.typesafe,
     STORAGE.quill,
     STORAGE.postgre,
+    STORAGE.flyway,
     TEST.zioTest,
     TEST.zioTestMagnolia,
     TEST.zioTestSBT
