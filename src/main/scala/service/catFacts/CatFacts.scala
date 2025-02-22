@@ -6,7 +6,7 @@ import zio.macros.accessible
 
 @accessible
 trait CatFacts {
-  def sendRequest(): Task[CatFactsModel]
+  def sendRequest: Task[CatFactsModel]
 
 }
 

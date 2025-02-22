@@ -7,7 +7,7 @@ import zio.http.{Client, Request, URL}
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 final case class CatFactsLive(config: CatFactsConfig, client: Client) extends CatFacts {
-  override def sendRequest(): Task[CatFactsModel] = {
+  override def sendRequest: Task[CatFactsModel] = {
 
     val url = URL.decode(config.url).toOption.get
 

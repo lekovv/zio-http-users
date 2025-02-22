@@ -1,5 +1,6 @@
 package service.status
 
+import exception.Exceptions.{InternalDatabaseException, StatusNotFoundException}
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.StatusModel
 import zio.{Task, ZIO, ZLayer}
@@ -21,6 +22,7 @@ final case class StatusRepoLive(ds: DataSource) extends StatusRepo {
   override def getAllStatuses: Task[List[StatusModel]] =
     ctx
       .run(statusSchema)
+      .mapError(err => InternalDatabaseException(err.getMessage))
       .provide(dsZL)
 
   override def getStatusById(id: String): Task[StatusModel] =
@@ -30,13 +32,21 @@ final case class StatusRepoLive(ds: DataSource) extends StatusRepo {
           .filter(_.id == lift(id))
           .filter(_.active)
       )
-      .map(_.head)
+      .mapBoth(
+        err => InternalDatabaseException(err.getMessage),
+        _.headOption
+      )
+      .some
+      .orElseFail(StatusNotFoundException(s"Status with $id was not found"))
       .provide(dsZL)
 
   override def setStatus(status: StatusModel): Task[String] =
     ctx
       .run(statusSchema.insertValue(lift(status)).returning(value => value))
-      .map(result => result.id)
+      .mapBoth(
+        err => InternalDatabaseException(err.getMessage),
+        result => result.id
+      )
       .provide(dsZL)
 }
 
