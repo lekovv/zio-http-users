@@ -1,51 +1,53 @@
 package http.endpoints
 
 import exception.Exceptions.{InternalDatabaseException, InternalException, StatusNotFoundException}
-import models.{CatFactsModel, StatusModel}
+import models.{CatFactsModel, UserModel, UserRequest}
 import service.catFacts.CatFacts
 import service.catFacts.CatFactsService.sendRequest
-import service.status.StatusRepo
-import service.status.StatusService._
+import service.user.UserRepo
+import service.user.UserService._
 import zio.http.codec.HttpCodec
 import zio.http.endpoint.Endpoint
 import zio.http.{RoutePattern, Routes, Status}
 import zio.schema.DeriveSchema.gen
 
-object StatusEP {
+import java.util.UUID
+
+object UsersEP {
 
   private val getAllAPI =
-    Endpoint(RoutePattern.GET / "endpoint" / "status" / "get-all")
-      .out[List[StatusModel]](Status.Ok)
+    Endpoint(RoutePattern.GET / "api" / "user" / "get-all")
+      .out[List[UserModel]](Status.Ok)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
   private val getAllRoute = getAllAPI
-    .implement(_ => getAllStatuses.mapError(err => InternalDatabaseException(err.getMessage)))
+    .implement(_ => getAllUsers.mapError(err => InternalDatabaseException(err.getMessage)))
 
   private val getByIdAPI =
-    Endpoint(RoutePattern.GET / "endpoint" / "status" / "get")
-      .query(HttpCodec.query[String]("id"))
-      .out[StatusModel](Status.Ok)
+    Endpoint(RoutePattern.GET / "api" / "user" / "get")
+      .query(HttpCodec.query[UUID]("id"))
+      .out[UserModel](Status.Ok)
       .outError[InternalDatabaseException](Status.InternalServerError)
       .outError[StatusNotFoundException](Status.NotFound)
 
   private val getByIdRoute =
     getByIdAPI
       .implement(id =>
-        getStatusById(id).mapError {
+        getUserById(id).mapError {
           case err: StatusNotFoundException   => Left(err)
           case err: InternalDatabaseException => Right(err)
         }
       )
 
-  private val setStatusAPI =
-    Endpoint(RoutePattern.POST / "endpoint" / "status" / "set")
-      .in[StatusModel]
-      .out[String](Status.Created)
+  private val createUserAPI =
+    Endpoint(RoutePattern.POST / "api" / "user" / "set")
+      .in[UserRequest]
+      .out[UUID](Status.Created)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val setStatusRoute =
-    setStatusAPI.implement(status =>
-      setStatus(status).mapBoth(
+  private val createUserRoute =
+    createUserAPI.implement(userRequest =>
+      createUser(userRequest).mapBoth(
         err => InternalDatabaseException(err.getMessage),
         id => id
       )
@@ -59,11 +61,11 @@ object StatusEP {
   private val catFactsRoute =
     catFactsAPI.implement(_ => sendRequest.mapError(err => InternalException(err.getMessage)))
 
-  val routes: Routes[StatusRepo with CatFacts, Nothing] =
+  val routes: Routes[UserRepo with CatFacts, Nothing] =
     Routes(
       getAllRoute,
       getByIdRoute,
-      setStatusRoute,
+      createUserRoute,
       catFactsRoute
     )
 }

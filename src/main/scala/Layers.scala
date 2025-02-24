@@ -1,7 +1,7 @@
 import config.ConfigApp
 import migration.Migrations
 import service.catFacts.CatFacts
-import service.status.StatusRepo
+import service.user.UserRepo
 import zio.http.netty.NettyConfig
 import zio.http.netty.NettyConfig.LeakDetectionLevel
 import zio.http.{Client, Server}
@@ -34,6 +34,6 @@ object Layers {
       Migrations.live >+>
       client >+>
       server >+>
-      StatusRepo.live >+>
+      UserRepo.live >+>
       CatFacts.live
 }

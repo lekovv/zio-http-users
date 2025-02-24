@@ -1,7 +1,7 @@
-import _root_.http.endpoints.{Health, StatusEP}
+import _root_.http.endpoints.{Health, UsersEP}
 import migration.Migrations
 import service.catFacts.CatFacts
-import service.status.StatusRepo
+import service.user.UserRepo
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
 import zio._
@@ -17,9 +17,9 @@ object Main extends ZIOAppDefault {
           .fromResourcePath()
       )
 
-  private val allRoutes = Health.routes ++ StatusEP.routes
+  private val allRoutes = Health.routes ++ UsersEP.routes
 
-  private def startServer: URIO[StatusRepo with CatFacts with Server, Nothing] = Server.serve(allRoutes)
+  private def startServer: URIO[UserRepo with CatFacts with Server, Nothing] = Server.serve(allRoutes)
 
   private val program =
     for {
