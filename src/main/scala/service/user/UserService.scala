@@ -24,4 +24,16 @@ object UserService {
       service <- ZIO.service[UserRepo]
       result  <- service.createUser(userRequest)
     } yield result
+
+  def updateUser(user: UserModel): RIO[UserRepo, UUID] =
+    for {
+      service <- ZIO.service[UserRepo]
+      result  <- service.updateUser(user)
+    } yield result
+
+  def deleteUserById(id: UUID): RIO[UserRepo, Unit] =
+    for {
+      service <- ZIO.service[UserRepo]
+      result <- service.deleteUserById(id)
+    } yield result
 }

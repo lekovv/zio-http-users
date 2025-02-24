@@ -14,6 +14,10 @@ trait UserRepo {
   def getUserById(id: UUID): Task[UserModel]
 
   def createUser(userRequest: UserRequest): Task[UUID]
+
+  def updateUser(user: UserModel): Task[UUID]
+
+  def deleteUserById(id: UUID): Task[Unit]
 }
 
 object UserRepo {

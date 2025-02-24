@@ -7,8 +7,8 @@ import java.util.UUID
 
 case class UserModel(
     id: UUID,
-    first_name: String,
-    last_name: String,
+    first_name: Option[String],
+    last_name: Option[String],
     is_active: Boolean
 )
 

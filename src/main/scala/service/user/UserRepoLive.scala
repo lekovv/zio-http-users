@@ -44,12 +44,40 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
 
     val id   = UUID.randomUUID()
     val user = UserModel(id, userRequest.first_name, userRequest.last_name, userRequest.is_active)
+
     ctx
       .run(userSchema.insertValue(lift(user)).returning(_.id))
       .mapBoth(
         err => InternalDatabaseException(err.getMessage),
         result => result
       )
+      .provide(dsZL)
+  }
+
+  override def updateUser(user: UserModel): Task[UUID] = {
+    ctx
+      .run(
+        userSchema
+          .filter(_.id == lift(user.id))
+          .updateValue(lift(user))
+          .returning(_.id)
+      )
+      .mapBoth(
+        err => InternalDatabaseException(err.getMessage),
+        result => result
+      )
+      .provide(dsZL)
+  }
+
+  override def deleteUserById(id: UUID): Task[Unit] = {
+    ctx
+      .run(
+        userSchema
+          .filter(_.id == lift(id))
+          .delete
+      )
+      .mapError(err => InternalDatabaseException(err.getMessage))
+      .unit
       .provide(dsZL)
   }
 }

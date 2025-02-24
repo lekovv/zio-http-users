@@ -4,8 +4,8 @@ import zio.json.{DeriveJsonCodec, JsonCodec}
 import zio.schema.{DeriveSchema, Schema}
 
 case class UserRequest(
-    first_name: String,
-    last_name: String,
+    first_name: Option[String],
+    last_name: Option[String],
     is_active: Boolean
 )
 
