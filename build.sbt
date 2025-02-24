@@ -1,4 +1,3 @@
-ThisBuild / organization := "test"
 ThisBuild / version := "0.0.1"
 ThisBuild / scalaVersion      := "2.13.10"
 ThisBuild / fork              := true
@@ -8,7 +7,7 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % "0.6.0")
 
 def settingsApp = Seq(
-  name := "zio-http-start",
+  name := "zio-http-users",
   Compile / run / mainClass := Option("EndpointPatternApp"),
   libraryDependencies ++= Dependencies.globalProjectDependencies,
 )
