@@ -1,22 +1,33 @@
-ThisBuild / version := "0.0.1"
-ThisBuild / scalaVersion      := "2.13.10"
-ThisBuild / fork              := true
-ThisBuild / scalacOptions := optionsOnOrElse("2.13", "2.12")("-Ywarn-unused", "-Ymacro-annotations")("").value
-ThisBuild / semanticdbEnabled := true
-ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
-ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % "0.6.0")
+val projectName    = "zio-http-users"
+val projectVersion = "0.0.1"
 
-def settingsApp = Seq(
-  name := "zio-http-users",
-  Compile / run / mainClass := Option("EndpointPatternApp"),
-  libraryDependencies ++= Dependencies.globalProjectDependencies,
+def scalaFixSettings = Seq(
+  semanticdbEnabled := true,
+  semanticdbVersion := scalafixSemanticdb.revision
+)
+
+//def scalafmtSettings = Seq(
+//  Compile / compile := (Compile / compile)
+//    .dependsOn(
+//      Compile / scalafmtCheckAll,
+//      Compile / scalafmtSbtCheck
+//    )
+//    .value
+//)
+
+resolvers ++= List(
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 )
 
 lazy val root = (project in file("."))
-  .enablePlugins(JavaAppPackaging)
-  .settings(settingsApp)
-
-addCommandAlias("fmt", "scalafmt; Test / scalafmt; sFix;")
-addCommandAlias("fmtCheck", "scalafmtCheck; Test / scalafmtCheck; sFixCheck")
-addCommandAlias("sFix", "scalafix OrganizeImports; Test / scalafix OrganizeImports")
-addCommandAlias("sFixCheck", "scalafix --check OrganizeImports; Test / scalafix --check OrganizeImports")
+  .enablePlugins(ScalafixPlugin)
+  .enablePlugins(PackPlugin)
+  .settings(
+    name         := projectName,
+    version      := projectVersion,
+    scalaVersion := Dependencies.Version.scala,
+    libraryDependencies ++= Dependencies.globalProjectDependencies,
+    Compile / scalacOptions ++= Settings.compilerOptions,
+//    scalafmtSettings,
+    scalaFixSettings
+  )
