@@ -1,0 +1,29 @@
+services:
+  server:
+    build: .
+    container_name: ZIO-HTTP-START
+    environment:
+      - INTERFACE_CONFIG_HOST=localhost
+      - INTERFACE_CONFIG_PORT=8080
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres
+    networks:
+      - zio-http-users
+
+  postgres:
+    image: 'postgres:latest'
+    container_name: PostgreSQL
+    environment:
+      POSTGRES_DB: zio-http-users
+      POSTGRES_USER: lekovv
+      POSTGRES_PASSWORD: 1315
+    ports:
+      - "5432:5432"
+    networks:
+      - zio-http-users
+
+networks:
+  zio-http-users:
+    driver: bridge

@@ -3,6 +3,7 @@ import sbt.*
 object Dependencies {
 
   object Version {
+    val scala        = "2.13.10"
     val zio          = "2.1.9"
     val zioHttp      = "3.0.1"
     val zioSchema    = "1.6.1"
