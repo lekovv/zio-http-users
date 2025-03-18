@@ -1,9 +1,10 @@
 package service.user
 
-import exception.Exceptions.{InternalDatabaseException, StatusNotFoundException}
+import exception.AppError
+import exception.AppError.{InternalDatabaseException, UserNotFoundException}
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.{UserModel, UserRequest}
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, URLayer, ZIO, ZLayer}
 
 import java.util.UUID
 import javax.sql.DataSource
@@ -20,13 +21,13 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
     querySchema[UserModel]("public.users")
   }
 
-  override def getAllUsers: Task[List[UserModel]] =
+  override def getAllUsers: IO[InternalDatabaseException, List[UserModel]] =
     ctx
       .run(userSchema)
       .mapError(err => InternalDatabaseException(err.getMessage))
       .provide(dsZL)
 
-  override def getUserById(id: UUID): Task[UserModel] =
+  override def getUserById(id: UUID): IO[AppError, UserModel] =
     ctx
       .run(
         userSchema
@@ -37,10 +38,10 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
         _.headOption
       )
       .some
-      .orElseFail(StatusNotFoundException(s"User with $id was not found"))
+      .orElseFail(UserNotFoundException(s"User with $id was not found"))
       .provide(dsZL)
 
-  override def createUser(userRequest: UserRequest): Task[UUID] = {
+  override def createUser(userRequest: UserRequest): IO[InternalDatabaseException, UUID] = {
 
     val id   = UUID.randomUUID()
     val user = UserModel(id, userRequest.first_name, userRequest.last_name, userRequest.is_active)
@@ -54,7 +55,7 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
       .provide(dsZL)
   }
 
-  override def updateUser(user: UserModel): Task[UUID] = {
+  override def updateUser(user: UserModel): IO[InternalDatabaseException, UUID] = {
     ctx
       .run(
         userSchema
@@ -69,7 +70,7 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
       .provide(dsZL)
   }
 
-  override def deleteUserById(id: UUID): Task[Unit] = {
+  override def deleteUserById(id: UUID): IO[InternalDatabaseException, Unit] = {
     ctx
       .run(
         userSchema
@@ -84,7 +85,7 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
 
 object UserRepoLive {
 
-  val layer: ZLayer[DataSource, Nothing, UserRepoLive] = ZLayer.fromZIO {
+  val layer: URLayer[DataSource, UserRepoLive] = ZLayer.fromZIO {
     for {
       ds <- ZIO.service[DataSource]
     } yield UserRepoLive(ds)

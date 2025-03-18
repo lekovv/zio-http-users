@@ -1,10 +1,9 @@
 package http.endpoints
 
-import exception.Exceptions.{InternalDatabaseException, InternalException, StatusNotFoundException}
+import exception.AppError
+import exception.AppError.{BodyParsingException, InternalDatabaseException, RequestExecutionException, UserNotFoundException}
 import models.{CatFactsModel, UserModel, UserRequest}
-import service.catFacts.CatFacts
 import service.catFacts.CatFactsService.sendRequest
-import service.user.UserRepo
 import service.user.UserService._
 import zio.http.codec.HttpCodec
 import zio.http.endpoint.Endpoint
@@ -20,26 +19,13 @@ object UsersEP {
       .out[List[UserModel]](Status.Ok)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val getAllRoute = getAllAPI
-    .implement(_ =>
-      getAllUsers
-        .mapError(err => InternalDatabaseException(err.getMessage))
-    )
-
   private val getByIdAPI =
     Endpoint(RoutePattern.GET / "api" / "user" / "get")
       .query(HttpCodec.query[UUID]("id"))
       .out[UserModel](Status.Ok)
-      .outError[InternalDatabaseException](Status.InternalServerError)
-      .outError[StatusNotFoundException](Status.NotFound)
-
-  private val getByIdRoute =
-    getByIdAPI
-      .implement(id =>
-        getUserById(id).mapError {
-          case err: StatusNotFoundException   => Left(err)
-          case err: InternalDatabaseException => Right(err)
-        }
+      .outErrors[AppError](
+        HttpCodec.error[InternalDatabaseException](Status.InternalServerError),
+        HttpCodec.error[UserNotFoundException](Status.NotFound)
       )
 
   private val createUserAPI =
@@ -48,27 +34,11 @@ object UsersEP {
       .out[UUID](Status.Created)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val createUserRoute =
-    createUserAPI.implement(userRequest =>
-      createUser(userRequest).mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        id => id
-      )
-    )
-
   private val updateUserAPI =
     Endpoint(RoutePattern.PUT / "api" / "user" / "update")
       .in[UserModel]
       .out[UUID](Status.Ok)
       .outError[InternalDatabaseException](Status.InternalServerError)
-
-  private val updateUserRoute =
-    updateUserAPI.implement(user =>
-      updateUser(user).mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        id => id
-      )
-    )
 
   private val deleteUserByIdAPI =
     Endpoint(RoutePattern.DELETE / "api" / "user" / "delete")
@@ -76,30 +46,20 @@ object UsersEP {
       .out[Unit](Status.Ok)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val deleteUserByIdRoute =
-    deleteUserByIdAPI.implement(id =>
-      deleteUserById(id)
-        .mapError(err => InternalDatabaseException(err.getMessage))
-    )
-
   private val catFactsAPI =
     Endpoint(RoutePattern.GET / "endpoint" / "cat")
       .out[CatFactsModel](Status.Ok)
-      .outError[InternalException](Status.InternalServerError)
+      .outErrors[AppError](
+        HttpCodec.error[RequestExecutionException](Status.InternalServerError),
+        HttpCodec.error[BodyParsingException](Status.BadRequest)
+      )
 
-  private val catFactsRoute =
-    catFactsAPI.implement(_ =>
-      sendRequest
-        .mapError(err => InternalException(err.getMessage))
-    )
-
-  val routes: Routes[UserRepo with CatFacts, Nothing] =
-    Routes(
-      getAllRoute,
-      getByIdRoute,
-      createUserRoute,
-      updateUserRoute,
-      deleteUserByIdRoute,
-      catFactsRoute
-    )
+  val routes = Routes(
+    getAllAPI.implement(_ => getAllUsers),
+    getByIdAPI.implement(id => getUserById(id)),
+    createUserAPI.implement(req => createUser(req)),
+    updateUserAPI.implement(req => updateUser(req)),
+    deleteUserByIdAPI.implement(id => deleteUserById(id)),
+    catFactsAPI.implement(_ => sendRequest)
+  )
 }

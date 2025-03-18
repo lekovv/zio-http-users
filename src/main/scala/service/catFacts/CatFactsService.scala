@@ -1,10 +1,11 @@
 package service.catFacts
+import exception.AppError
 import models.CatFactsModel
-import zio.{RIO, ZIO}
+import zio.ZIO
 
 object CatFactsService {
 
-  def sendRequest: RIO[CatFacts, CatFactsModel] =
+  def sendRequest: ZIO[CatFacts, AppError, CatFactsModel] =
     for {
       service <- ZIO.service[CatFacts]
       result  <- service.sendRequest
