@@ -22,7 +22,7 @@
    Тело запроса:
 
 ```json
-  {
+{
   "first_name": "string",
   "last_name": "string",
   "is_active": "boolean (обязательное)"
@@ -90,7 +90,7 @@ This is a test project in which I practice my skills in ZIO
    Body:
 
 ```json
-  {
+{
   "first_name": "string",
   "last_name": "string",
   "is_active": "boolean (required)"
